@@ -1,0 +1,125 @@
+---
+title: "2025 Milk Blend Sales Projection"
+author: "Ryan Love-Riner"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(scales)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This project aims to accurately project Iconik's retail Milk Blend sales for the 
+months of 2025 for which it was not or has not yet been offered (All months 
+except June and July as of this report's publication).
+
+# Data
+
+```{r, warning=FALSE, include=FALSE}
+# Read files into R
+net_mod_2024 <- read.csv("C:/Users/ryanc/OneDrive/Documents/Work Stuff/Milk Blend Projections/net_mod_sales_2024.csv")
+net_mod_2025 <- read.csv("C:/Users/ryanc/OneDrive/Documents/Work Stuff/Milk Blend Projections/net_mod_sales_2025_proj.csv")
+mb_mod_2025 <- read.csv("C:/Users/ryanc/OneDrive/Documents/Work Stuff/Milk Blend Projections/mb_proj.csv")
+
+# Add year column to net mod dataframes
+net_mod_2024 <- net_mod_2024 %>% mutate(Year = "2024")
+net_mod_2025 <- net_mod_2025 %>% mutate(Year = "2025")
+
+# Define month order
+month_levels <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+# Add month order as ordered factor to dataframes
+net_mod_2024$Month <- factor(net_mod_2024$Month, levels = month_levels, ordered = TRUE)
+net_mod_2025$Month <- factor(net_mod_2025$Month, levels = month_levels, ordered = TRUE)
+mb_mod_2025$Month <- factor(mb_mod_2025$Month, levels = month_levels, ordered = TRUE)
+
+# For some reason, R stopped liking the format of mb_mod_2025, so this will
+# reconfigure the sales values
+mb_mod_2025$Sales <- as.numeric(gsub("[$,]", "", mb_mod_2025$Sales))
+
+# Need to create a vector for the vjust argument values
+custom_vjust <- c(-0.75,1.0,-0.75,1.5,-0.75,1.5,-0.75,1.75,1.5,-0.75,1.5,-0.25)
+custom_hjust <- c(0,-0.1,0,0,0,0,0,1.0,0,0,0,1.15)
+
+# Bind rows for 2024/2025 comparison
+net_mod_both <- bind_rows(net_mod_2024, net_mod_2025)
+```
+
+
+Data was exported from Clover and ETLed directly within Microsoft Excel. All 
+monetary values represent gross sales and do not account for potential discounts 
+or returns. Also note that this data consists only of cafe sales, and does not 
+incorporate online or wholesale numbers.
+
+Also, this forecast model leverages early 2024 data from Red, and does not 
+account for that location's interim growth. Therefore the proposed data is 
+somewhat conservative for the first several months of 2025.
+
+# Method
+
+Data on retail coffee sales for 2024 was pulled and compared to 2025's extant 
+sales (January through July). The average difference in month-to-month sales was 
+calculated, then applied to the remainder of 2024's sales (August through 
+December.)
+
+Then Milk Blend sales data was pulled (June 16th through July). June sales were 
+doubled to account for its missing half. The average of Milk Blend's % share of 
+gross retail sales for these months was calculated, then applied to the gross 
+sales of 2025's remaining real and forecast months.
+
+# Projections
+
+### Gross Retail Sales
+
+```{r, warning=FALSE, fig.align='center', echo=FALSE, out.width='80%'}
+ggplot(net_mod_both, aes(x = Month, y = Sales, colour = Year, group = Year)) +
+  geom_line(size=1.2) +
+  geom_point(size=3) +
+  labs(
+    title = "Monthly Gross Retail Sales",
+    subtitle = "(2025 August--December Projected)",
+    x = "Month",
+    y = "Sales",
+    colour = "Year"
+  ) +
+  theme_grey()
+```
+
+### Gross Milk Blend Sales
+
+```{r, warning=FALSE, fig.align='center', echo=FALSE, out.width='80%'}
+ggplot(mb_mod_2025, aes(x = Month, y = Sales, group = 1)) +
+  geom_line(size=1.2) +
+  geom_point(size=3) +
+  geom_text(aes(label = dollar(Sales)), vjust = custom_vjust, hjust = custom_hjust, size = 3.5) +
+  labs(
+    title = "Monthly Milk Blend Gross Retail Sales",
+    subtitle = "(January--May and August--December Projected)",
+    x = "Month",
+    y = "Sales",
+  ) +
+  scale_y_continuous(labels = dollar_format(prefix = "$")) +
+  theme_grey()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
